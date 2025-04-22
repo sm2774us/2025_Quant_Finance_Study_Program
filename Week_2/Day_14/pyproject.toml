@@ -1,0 +1,18 @@
+# pyproject.toml
+[tool.poetry]
+name = "quant_study"
+version = "0.1.0"
+description = "Quantitative Researcher Study Program"
+authors = ["Shaikat Majumdar <sm2774us@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+numpy = "^1.23.0"
+pandas = "^1.5.0"
+scipy = "^1.9.0"
+mosek = "^10.0.0"
+matplotlib = "^3.5.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
