@@ -12,7 +12,7 @@ Master optimization techniques using Mosek for portfolio and margin allocation p
 Portfolio Optimization with Transaction Costs:
 
 $$
-\min_w \left$w^T \Sigma w + \lambda \sum_{i=1}^n |w_i - w_{0,i}| \right)
+\min_w \left(w^T \Sigma w + \lambda \sum_{i=1}^n |w_i - w_{0,i}| \right)
 $$
 
 Subject to:
