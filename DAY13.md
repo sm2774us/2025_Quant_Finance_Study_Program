@@ -1,0 +1,134 @@
+# Day 13: Capstone Project
+
+## Objective
+Build a comprehensive multi-asset margin allocation model integrating optimization, risk, and regulatory constraints.
+
+## Key Concepts
+- __Portfolio Optimization:__ Minimizes variance while meeting return and risk targets.
+- __Transaction Costs:__ Modeled to reflect real-world trading conditions.
+- __Regulatory Compliance:__ Incorporates FINRA and Basel III requirements.
+
+## Mathematical Formulation
+
+Optimization Problem:
+
+$$
+\min_w \left$w^T \Sigma w + \lambda \sum_{i=1}^n |w_i - w_{0,i}| \right) \quad \text{s.t.} \quad w^T \mu \geq r, \quad w^T \Sigma w \leq \sigma^2
+$$
+
+Where:
+
+- $\lambda$ : Transaction cost parameter
+- $w_0$ : Initial weights
+- $\sigma^2$ : Variance limit
+
+## Workflow Diagram
+```mermaid
+graph TD
+    A[Input Data] --> B[Preprocess Returns]
+    B --> C[Estimate Parameters]
+    C --> D[Formulate Optimization]
+    D --> E[Mosek Solver]
+    E --> F[Optimal Allocation]
+    F --> G[Compliance Checks]
+```
+
+## Business Context
+- __Capital Efficiency:__ Optimizes margins, freeing capital for investment.
+- __Risk Management:__ Ensures portfolios meet VaR and ES limits.
+- __Scalability:__ Handles large, diverse portfolios efficiently.
+
+---
+
+## [__Day-13 : Notebook__](./notebooks/day13_notebook.ipynb)
+```json
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "# Day 13: Capstone Project\n",
+        "## Comprehensive Multi-Asset Margin Model\n",
+        "This notebook integrates all concepts to build a production-ready margin allocation model."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {},
+      "outputs": [],
+      "source": [
+        "from mosek.fusion import *\n",
+        "import numpy as np\n",
+        "import pandas as pd\n",
+        "\n",
+        "def capstone_model(returns: pd.DataFrame, initial_weights: np.ndarray, target_return: float, var_limit: float, lambda_tc: float) -> np.ndarray:\n",
+        "    n = returns.shape[1]\n",
+        "    mu = returns.mean().values\n",
+        "    Sigma = returns.cov().values\n",
+        "\n",
+        "    with Model(\"Capstone\") as M:\n",
+        "        w = M.variable(\"w\", n, Domain.unbounded())\n",
+        "        t = M.variable(\"t\", n, Domain.unbounded())  # Transaction cost variable\n",
+        "\n",
+        "        # Objective: Minimize variance + transaction costs\n",
+        "        M.objective(\"obj\", ObjectiveSense.Minimize, Expr.add(Expr.dot(w, Expr.mul(Sigma, w)), Expr.mul(lambda_tc, Expr.sum(t))))\n",
+        "\n",
+        "        # Constraints\n",
+        "        M.constraint(\"return\", Expr.dot(mu, w), Domain.greaterThan(target_return))\n",
+        "        M.constraint(\"var\", Expr.dot(w, Expr.mul(Sigma, w)), Domain.lessThan(var_limit**2))\n",
+        "        M.constraint(\"tc_pos\", Expr.sub(w, initial_weights), Domain.lessThan(t))\n",
+        "        M.constraint(\"tc_neg\", Expr.sub(initial_weights, w), Domain.lessThan(t))\n",
+        "\n",
+        "        M.solve()\n",
+        "        return w.level()\n",
+        "\n",
+        "# Example usage\n",
+        "np.random.seed(42)\n",
+        "returns = pd.DataFrame(np.random.normal(0, 0.01, (252, 5)))\n",
+        "initial_weights = np.ones(5) / 5\n",
+        "optimal_weights = capstone_model(returns, initial_weights, 0.05, 0.1, 0.001)\n",
+        "print(f'Optimal Weights: {optimal_weights}')"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Documentation\n",
+        "- **Technical**: Model architecture, code documentation.\n",
+        "- **Business**: Impact analysis, user guide.\n",
+        "- **Regulatory**: Compliance with FINRA, Basel III.\n",
+        "\n",
+        "## Automation\n",
+        "- **CI/CD**: Automated testing and deployment pipelines.\n",
+        "- **Monitoring**: Real-time performance tracking."
+      ]
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.9.0"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 4
+}
+```
+
+---
